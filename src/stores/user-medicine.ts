@@ -4,15 +4,19 @@ import {
   db,
   userService,
   medicineService,
+  orderService,
   type User,
   type Medicine,
   type MedicineUpdate,
+  type Order,
 } from 'src/services/database';
 
 export const useUserMedicineStore = defineStore('userMedicine', () => {
   // State
   const users = ref<User[]>([]);
   const medicines = ref<Medicine[]>([]);
+  const orders = ref<Order[]>([]);
+  const currentOrder = ref<Order | null>(null);
   const currentUser = ref<User | null>(null);
   const currentMedicine = ref<Medicine | null>(null);
   const isLoading = ref(false);
@@ -21,6 +25,7 @@ export const useUserMedicineStore = defineStore('userMedicine', () => {
   // Getters
   const totalUsers = computed(() => users.value.length);
   const totalMedicines = computed(() => medicines.value.length);
+  const totalOrders = computed(() => orders.value.length);
   const usersWithMedicines = computed(() => {
     return users.value.filter((user) =>
       medicines.value.some((medicine) => medicine.userId === user.id),
@@ -457,7 +462,217 @@ export const useUserMedicineStore = defineStore('userMedicine', () => {
       isLoading.value = false;
     }
   };
+  // order
+  const getOrdersByUserId = computed(() => (userId: number) => {
+    return orders.value.filter((order) => order.userId === userId);
+  });
+  const getOrderById = computed(() => (id: number) => {
+    return orders.value.find((order) => order.id === id);
+  });
+  const getUnexportedOrdersByUserId = async (userId: number) => {
+    return orderService.getUnexportedOrderByUserId(userId);
+  };
+  const loadOrdersByUserId = async (userId: number) => {
+    try {
+      isLoading.value = true;
+      clearError();
+      const userOrders = await orderService.getOrderByUserId(userId);
 
+      // Update local state with these orders
+      // Remove existing orders for this user and add fresh ones
+      orders.value = [...orders.value.filter((order) => order.userId !== userId), ...userOrders];
+
+      return userOrders;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load user orders');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const loadAllOrders = async () => {
+    try {
+      isLoading.value = true;
+      clearError();
+      const orders = await orderService.getAllOrders();
+      return orders;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load orders');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const loadUsersWithOrders = async (exportedBoolean?: boolean) => {
+    try {
+      isLoading.value = true;
+      clearError();
+      const orders = await orderService.getUsersWithOrders(exportedBoolean);
+      return orders;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load orders');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const createOrder = async (
+    userId: number,
+    medicineId: number,
+    quantity: number,
+    exported: 0 | 1 = 0,
+  ) => {
+    if (quantity <= 0) {
+      throw new Error('Quantity must be greater than 0');
+    }
+    try {
+      isLoading.value = true;
+      clearError();
+
+      // Verify user exists
+      const user = await userService.getUserById(userId);
+      if (!user) throw new Error('User not found');
+
+      // Verify medicine exists
+      const medicine = await medicineService.getMedicineById(medicineId);
+      if (!medicine) throw new Error('Medicine not found');
+
+      const orderId = await orderService.addOrder({
+        userId,
+        medicineId,
+        quantity,
+        exported,
+      });
+
+      // Refresh orders list
+      await orderService.getAllOrders();
+
+      // Load the newly created order
+      await orderService.getOrderById(orderId);
+
+      return orderId;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create order');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const updateOrderQuantity = async (id: number, quantity: number) => {
+    try {
+      isLoading.value = true;
+      clearError();
+
+      if (quantity <= 0) {
+        throw new Error('Quantity must be greater than 0');
+      }
+
+      const updated = await orderService.editQuantity(id, quantity);
+
+      if (updated > 0) {
+        // Update local state
+        const index = orders.value.findIndex((order) => order.id === id);
+        if (index !== -1) {
+          orders.value[index] = { ...orders.value[index], quantity } as Order;
+        }
+        if (currentOrder.value?.id === id) {
+          currentOrder.value = { ...currentOrder.value, quantity };
+        }
+      }
+
+      return updated;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update order quantity');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const updateOrder = async (
+    id: number,
+    updates: Partial<Omit<Order, 'id' | 'createdAt' | 'userId'>>,
+  ) => {
+    try {
+      isLoading.value = true;
+      clearError();
+
+      const updated = await orderService.editOrder(id, updates);
+
+      if (updated > 0) {
+        // Update local state
+        const index = orders.value.findIndex((order) => order.id === id);
+        if (index !== -1) {
+          orders.value[index] = { ...orders.value[index], ...updates } as Order;
+        }
+        if (currentOrder.value?.id === id) {
+          currentOrder.value = { ...currentOrder.value, ...updates };
+        }
+      }
+
+      return updated;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update order');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const deleteOrder = async (id: number) => {
+    try {
+      isLoading.value = true;
+      clearError();
+      await orderService.deleteOrder(id);
+
+      // Update local state
+      orders.value = orders.value.filter((order) => order.id !== id);
+      if (currentOrder.value?.id === id) {
+        currentOrder.value = null;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete order');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const deleteOrdersOlderThan = async (days: number = 30) => {
+    try {
+      isLoading.value = true;
+      clearError();
+
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+
+      const deletedCount = await orderService.deleteOrdersOlderThan(days);
+
+      // Remove deleted orders from local state
+      orders.value = orders.value.filter((order) => order.createdAt >= cutoffDate);
+
+      // Clear current order if it was deleted
+      if (currentOrder.value && currentOrder.value.createdAt < cutoffDate) {
+        currentOrder.value = null;
+      }
+
+      return deletedCount;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete old orders');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const butSetExport = async (ids: number[], exported: 0 | 1) => {
+    try {
+      isLoading.value = true;
+      clearError();
+      await orderService.bulkSetExported(ids, exported);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to set Export order');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
   const exportData = async () => {
     try {
       isLoading.value = true;
@@ -520,6 +735,9 @@ export const useUserMedicineStore = defineStore('userMedicine', () => {
     // State
     users,
     medicines,
+    orders,
+    currentOrder,
+    totalOrders,
     currentUser,
     currentMedicine,
     isLoading,
@@ -558,6 +776,20 @@ export const useUserMedicineStore = defineStore('userMedicine', () => {
     deleteMedicine,
     searchMedicines,
     searchMedicinesByUser,
+
+    //order Actions
+    loadAllOrders,
+    getOrderById,
+    getOrdersByUserId,
+    loadUsersWithOrders,
+    getUnexportedOrdersByUserId,
+    loadOrdersByUserId,
+    createOrder,
+    updateOrder,
+    updateOrderQuantity,
+    deleteOrder,
+    deleteOrdersOlderThan,
+    butSetExport,
 
     // Combined Actions
     createUserWithMedicines,

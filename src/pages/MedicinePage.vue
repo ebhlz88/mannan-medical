@@ -1,7 +1,7 @@
 <!-- src/pages/MedicinesPage.vue -->
 <template>
   <div class="medicines-page">
-    <div class="page-header">
+    <div class="page-header text-white">
       <div>
         <h4>Medicines</h4>
         <p class="page-subtitle">View and manage all medicines</p>
@@ -50,6 +50,7 @@
         <table class="table" v-if="filteredMedicines.length > 0">
           <thead>
             <tr>
+              <th>Create Order</th>
               <th>Medicine Name</th>
               <th>Dosage</th>
               <th>Company</th>
@@ -60,6 +61,11 @@
           </thead>
           <tbody>
             <tr v-for="medicine in filteredMedicines" :key="medicine.id">
+              <td v-if="medicine.id">
+                <div @click="activateCreateOrder(medicine.userId, medicine.id)" class="bg-blue">
+                  Create
+                </div>
+              </td>
               <td>
                 <div class="medicine-name">
                   <div
@@ -163,6 +169,9 @@
         </div>
       </div>
     </div>
+    <q-dialog v-model="showcreateOrder">
+      <create-order :activeMed="activeMed" @cancel="cancelCreateOrder" />
+    </q-dialog>
   </div>
 </template>
 
@@ -170,13 +179,27 @@
 import { ref, computed, onMounted } from 'vue';
 import { useUserMedicineStore } from 'src/stores/user-medicine';
 import type { Medicine } from 'src/services/database';
+import CreateOrder from 'src/components/CreateOrder.vue';
 
 const store = useUserMedicineStore();
 
 const searchQuery = ref('');
 const selectedUser = ref<string | number>('');
 const showEditModal = ref(false);
+const showcreateOrder = ref(false);
 
+const activeMed = ref({
+  userId: 0,
+  medicineId: 0,
+});
+function activateCreateOrder(userId: number, medicineId: number) {
+  activeMed.value.userId = userId;
+  activeMed.value.medicineId = medicineId;
+  showcreateOrder.value = true;
+}
+function cancelCreateOrder() {
+  showcreateOrder.value = false;
+}
 const editForm = ref({
   id: 0,
   userId: 0,
@@ -369,7 +392,7 @@ onMounted(async () => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(140deg, #0c0211 0%, #ff00f5 100%);
   color: white;
   display: flex;
   align-items: center;

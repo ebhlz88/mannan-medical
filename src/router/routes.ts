@@ -36,7 +36,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'Quasar SQLite App' },
       },
       {
-        path: 'checkout/:id',
+        path: 'order-page',
+        name: 'OrdersPage',
+        component: () => import('pages/OrdersPage.vue'),
+        meta: { title: 'Quasar SQLite App' },
+      },
+      {
+        path: 'checkout',
         name: 'CheckOut',
         component: () => import('pages/CheckOut.vue'),
         meta: { title: 'Quasar SQLite App' },

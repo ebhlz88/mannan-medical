@@ -15,6 +15,9 @@
             <router-link :to="{ name: 'MedicinePage' }" class="navbar-item" active-class="active">
               Medicines ({{ store.totalMedicines }})
             </router-link>
+            <router-link :to="{ name: 'CheckOut' }" class="navbar-item" active-class="active">
+              Orders
+            </router-link>
           </div>
         </q-scroll-area>
       </div>
@@ -65,7 +68,7 @@ onMounted(async () => {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(140deg, #0c0211 0%, #ff00f5 100%);
   min-height: 100vh;
 }
 

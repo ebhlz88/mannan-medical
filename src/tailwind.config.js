@@ -1,25 +1,25 @@
-// tailwind.config.js
-/** @type {import('tailwindcss').Config} */
+// https://github.com/michael-ciniawsky/postcss-load-config
+
+import autoprefixer from 'autoprefixer';
+import tailwindcss from '@tailwindcss/postcss';
+// import rtlcss from 'postcss-rtlcss'
+
 export default {
-  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx,scss}'],
-  theme: {
-    extend: {
-      // You can map Quasar colors to Tailwind
-      colors: {
-        primary: 'var(--q-primary)',
-        secondary: 'var(--q-secondary)',
-        accent: 'var(--q-accent)',
-        dark: 'var(--q-dark)',
-        'dark-page': 'var(--q-dark-page)',
-        positive: 'var(--q-positive)',
-        negative: 'var(--q-negative)',
-        info: 'var(--q-info)',
-        warning: 'var(--q-warning)',
-      },
-    },
-  },
-  plugins: [],
-  corePlugins: {
-    preflight: false, // Crucial for Quasar compatibility
-  },
+  plugins: [
+    tailwindcss(),
+
+    autoprefixer({
+      overrideBrowserslist: [
+        'last 4 Chrome versions',
+        'last 4 Firefox versions',
+        'last 4 Edge versions',
+        'last 4 Safari versions',
+        'last 4 Android versions',
+        'last 4 ChromeAndroid versions',
+        'last 4 FirefoxAndroid versions',
+        'last 4 iOS versions',
+      ],
+    }),
+    // rtlcss()
+  ],
 };

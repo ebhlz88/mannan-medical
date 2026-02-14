@@ -116,6 +116,12 @@
             <div v-else class="medicine-grid">
               <div v-for="medicine in userMedicines" :key="medicine.id" class="medicine-card">
                 <div class="medicine-header">
+                  <div
+                    v-if="store.currentUser.id && medicine.id"
+                    @click="activateCreateOrder(store.currentUser.id, medicine.id)"
+                  >
+                    create order
+                  </div>
                   <h4 @click="$router.push({ name: 'CheckOut', params: { id: medicine.id } })">
                     {{ medicine.medicineName }}
                   </h4>
@@ -214,6 +220,9 @@
         </div>
       </div>
     </div>
+    <q-dialog v-model="showcreateOrder">
+      <create-order :activeMed="activeMed" @cancel="cancelCreateOrder" />
+    </q-dialog>
   </div>
 </template>
 
@@ -221,12 +230,27 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserMedicineStore } from 'src/stores/user-medicine';
+import CreateOrder from 'src/components/CreateOrder.vue';
 import type { Medicine } from 'src/services/database';
 import { truncateString } from 'src/utils/utils';
 
 const route = useRoute();
 const router = useRouter();
 const store = useUserMedicineStore();
+
+const showcreateOrder = ref(false);
+const activeMed = ref({
+  userId: 0,
+  medicineId: 0,
+});
+function activateCreateOrder(userId: number, medicineId: number) {
+  activeMed.value.userId = userId;
+  activeMed.value.medicineId = medicineId;
+  showcreateOrder.value = true;
+}
+function cancelCreateOrder() {
+  showcreateOrder.value = false;
+}
 
 const error = ref<string | null>(null);
 const showEditModal = ref(false);
@@ -412,7 +436,7 @@ watch(
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(140deg, #0c0211 0%, #ff00f5 100%);
   color: white;
   display: flex;
   align-items: center;

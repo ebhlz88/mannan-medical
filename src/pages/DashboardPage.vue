@@ -204,7 +204,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(140deg, #0c0211 0%, #ff00f5 100%);
   border-radius: 1rem;
   color: white;
 }

@@ -1,7 +1,7 @@
 <!-- src/pages/UsersPage.vue -->
 <template>
   <div class="users-page">
-    <div class="page-header">
+    <div class="page-header text-white">
       <div>
         <div class="header-actions">
           <router-link :to="{ name: 'AddUserPage' }" class="back-link"> Add User </router-link>
@@ -368,7 +368,7 @@ onMounted(async () => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(140deg, #0c0211 0%, #ff00f5 100%);
   color: white;
   display: flex;
   align-items: center;

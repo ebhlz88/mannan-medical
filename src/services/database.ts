@@ -298,13 +298,6 @@ export const orderService = {
   async getOrderByUserId(userId: number): Promise<Order[]> {
     return await db.order.where('userId').equals(userId).toArray();
   },
-  async getUnexportedOrderByUserId(userId: number): Promise<Order[]> {
-    return await db.order
-      .where('userId')
-      .equals(userId)
-      .and((order) => order.exported === 0)
-      .toArray();
-  },
   async getOrderById(id: number): Promise<Order[]> {
     return await db.order.where('id').equals(id).toArray();
   },
@@ -317,6 +310,9 @@ export const orderService = {
   },
   async editQuantity(id: number, newQuantity: number): Promise<number> {
     return await db.order.update(id, { quantity: newQuantity });
+  },
+  async editExported(id: number, exported: 0 | 1): Promise<number> {
+    return await db.order.update(id, { exported: exported });
   },
   async editOrder(id: number, updates: Partial<Omit<Order, 'id' | 'createdAt'>>): Promise<number> {
     return await db.order.update(id, updates);
@@ -560,31 +556,5 @@ export const combinedService = {
       await db.users.bulkAdd(data.users);
       await db.medicines.bulkAdd(data.medicines);
     });
-  },
-};
-
-// Helper functions for search logic
-export const searchHelpers = {
-  userMatchesSearch(user: User, searchTerm: string, lowerSearchTerm: string): boolean {
-    const matchesName = user.fullName.toLowerCase().includes(lowerSearchTerm);
-    const matchesPhone = user.phoneNumber.includes(searchTerm);
-    const matchesCompany = user.company
-      ? user.company.toLowerCase().includes(lowerSearchTerm)
-      : false;
-    const matchesAddress = user.address
-      ? user.address.toLowerCase().includes(lowerSearchTerm)
-      : false;
-
-    return matchesName || matchesPhone || matchesCompany || matchesAddress;
-  },
-
-  medicineMatchesSearch(medicine: Medicine, lowerSearchTerm: string): boolean {
-    const matchesName = medicine.medicineName.toLowerCase().includes(lowerSearchTerm);
-    const matchesDosage = medicine.dosage.toLowerCase().includes(lowerSearchTerm);
-    const matchesCompany = medicine.company
-      ? medicine.company.toLowerCase().includes(lowerSearchTerm)
-      : false;
-
-    return matchesName || matchesDosage || matchesCompany;
   },
 };

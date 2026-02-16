@@ -469,9 +469,6 @@ export const useUserMedicineStore = defineStore('userMedicine', () => {
   const getOrderById = computed(() => (id: number) => {
     return orders.value.find((order) => order.id === id);
   });
-  const getUnexportedOrdersByUserId = async (userId: number) => {
-    return orderService.getUnexportedOrderByUserId(userId);
-  };
   const loadOrdersByUserId = async (userId: number) => {
     try {
       isLoading.value = true;
@@ -577,6 +574,36 @@ export const useUserMedicineStore = defineStore('userMedicine', () => {
         }
         if (currentOrder.value?.id === id) {
           currentOrder.value = { ...currentOrder.value, quantity };
+        }
+      }
+
+      return updated;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update order quantity');
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+  const updateOrderExported = async (id: number, exported: 0 | 1) => {
+    try {
+      isLoading.value = true;
+      clearError();
+
+      if (!exported) {
+        throw new Error('exported');
+      }
+
+      const updated = await orderService.editExported(id, exported);
+
+      if (updated > 0) {
+        // Update local state
+        const index = orders.value.findIndex((order) => order.id === id);
+        if (index !== -1) {
+          orders.value[index] = { ...orders.value[index], exported } as Order;
+        }
+        if (currentOrder.value?.id === id) {
+          currentOrder.value = { ...currentOrder.value, exported };
         }
       }
 
@@ -782,7 +809,6 @@ export const useUserMedicineStore = defineStore('userMedicine', () => {
     getOrderById,
     getOrdersByUserId,
     loadUsersWithOrders,
-    getUnexportedOrdersByUserId,
     loadOrdersByUserId,
     createOrder,
     updateOrder,
@@ -790,6 +816,7 @@ export const useUserMedicineStore = defineStore('userMedicine', () => {
     deleteOrder,
     deleteOrdersOlderThan,
     butSetExport,
+    updateOrderExported,
 
     // Combined Actions
     createUserWithMedicines,

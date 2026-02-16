@@ -89,6 +89,7 @@ body {
   padding-top: 60px !important;
   top: 0;
   z-index: 1000;
+  margin-top: 11px;
 }
 
 .navbar-brand {

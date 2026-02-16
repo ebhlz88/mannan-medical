@@ -1,8 +1,8 @@
 <template>
   <div>
-    <div class="flex justify-end">
-      <button @click="downloadAll" class="btn btn-primary">Download PDF</button>
-    </div>
+    <!-- <div class="flex justify-end">
+      <button @click="sharePDF" class="btn btn-primary">Download PDF</button>
+    </div> -->
     <div
       v-for="user in orders"
       :key="user.id"
@@ -11,7 +11,10 @@
     >
       <!-- Title -->
       <div>
-        <div class="text-h6">Medicine Order</div>
+        <div class="flex justify-between items-center">
+          <div class="text-h6">Medicine Order</div>
+          <q-icon @click="shareOneOrders(user)" size="md" color="blue" name="share"></q-icon>
+        </div>
         <q-separator class="q-my-sm" />
         <div class="q-mb-md">
           <div class="text-caption text-bold">User Info</div>
@@ -94,16 +97,15 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useUserMedicineStore } from 'src/stores/user-medicine';
-import html2pdf from 'html2pdf.js';
+import { shareSingleOrder } from 'src/services/shareOrder';
 import type { UserWithOrders } from 'src/services/database';
 const store = useUserMedicineStore();
-const { loadUsersWithOrders, updateOrderQuantity, deleteOrder, butSetExport } = store;
+const { loadUsersWithOrders, updateOrderQuantity, deleteOrder } = store;
 const showEditOrder = ref(false);
 const activeOrder = ref();
 const editOrderQuantity = ref();
-
 const orders = ref<UserWithOrders[]>([]);
 onMounted(async () => {
   await loadOrders();
@@ -131,46 +133,9 @@ async function submitEdit() {
   }
 }
 
-const allOrderIds = computed<number[]>(() => {
-  return orders.value.flatMap((user) =>
-    user.orders.map((item) => item.id).filter((id): id is number => id !== undefined),
-  );
-});
-
-const allUserIds = computed<number[]>(() => {
-  return orders.value.flatMap((user) => user.id ?? 0);
-});
-
-async function downloadAll() {
-  for (const id of allUserIds.value) {
-    await downloadPdf(id);
-  }
-  await butSetExport(allOrderIds.value, 1);
-}
-
-async function downloadPdf(id: number) {
-  const element = document.getElementById(`order-${id}`);
-  console.log(`order-${id}`);
-  console.log(element);
-  const options = {
-    margin: 10,
-    filename: 'medicine-order.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-  } as const;
-  if (!element) {
-    console.error('Receipt element not found');
-    return;
-  }
-  const worker = html2pdf().set(options).from(element);
-
-  const pdfBlob = await worker.outputPdf('blob');
-
-  const url = URL.createObjectURL(pdfBlob);
-
-  // Open in new tab instead of download
-  window.open(url, '_blank');
+async function shareOneOrders(userOrder: UserWithOrders) {
+  await shareSingleOrder(userOrder);
+  await loadOrders();
 }
 </script>
 

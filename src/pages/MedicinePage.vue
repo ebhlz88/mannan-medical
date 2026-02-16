@@ -16,7 +16,7 @@
 
     <!-- Search Section -->
     <div class="card">
-      <div class="search-section">
+      <div class="search-section grid grid-cols-[70%_30%] gap-2">
         <div class="search-input-container">
           <input
             v-model="searchQuery"
@@ -26,7 +26,7 @@
           />
         </div>
 
-        <div class="filter-section">
+        <div>
           <select v-model="selectedUser" class="filter-select">
             <option value="">All Users</option>
             <option v-for="user in store.users" :key="user.id" :value="user.id">
@@ -62,9 +62,12 @@
           <tbody>
             <tr v-for="medicine in filteredMedicines" :key="medicine.id">
               <td v-if="medicine.id">
-                <div @click="activateCreateOrder(medicine.userId, medicine.id)" class="bg-blue">
-                  Create
-                </div>
+                <button
+                  @click="activateCreateOrder(medicine.userId, medicine.id)"
+                  class="bg-blue btn text-white"
+                >
+                  +
+                </button>
               </td>
               <td>
                 <div class="medicine-name">
@@ -322,18 +325,12 @@ onMounted(async () => {
   color: #ffffff;
 }
 
-.search-section {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
 .search-input-container {
   flex: 1;
   position: relative;
 }
 .search-input {
-  width: 220px;
+  width: 100%;
   padding: 0.75rem 1rem 0.75rem 0.75rem;
   border: 2px solid #e5e7eb;
   border-radius: 0.5rem;
@@ -341,12 +338,7 @@ onMounted(async () => {
   transition: border-color 0.3s ease;
 }
 
-.filter-section {
-  min-width: 100px;
-}
-
 .filter-select {
-  width: 100px;
   padding: 0.75rem 1rem;
   border: 2px solid #e5e7eb;
   border-radius: 0.5rem;

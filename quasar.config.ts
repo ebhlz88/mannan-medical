@@ -75,6 +75,9 @@ export default defineConfig((/* ctx */) => {
           { server: false },
         ],
       ],
+      extendViteConf(viteConf) {
+        viteConf.base = '/';
+      },
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#devserver
@@ -98,7 +101,7 @@ export default defineConfig((/* ctx */) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: [],
+      plugins: ['Notify'],
     },
 
     // animations: 'all', // --- includes all animations

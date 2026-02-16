@@ -1,7 +1,7 @@
 <!-- src/pages/DashboardPage.vue -->
 <template>
   <div class="dashboard">
-    <div class="dashboard-header">
+    <div class="dashboard-header text-white">
       <h4>Dashboard</h4>
       <p class="dashboard-subtitle">Overview of your user and medicine data</p>
     </div>

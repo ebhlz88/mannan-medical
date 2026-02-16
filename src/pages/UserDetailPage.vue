@@ -100,7 +100,7 @@
               </span>
             </h3>
             <button @click="showAddMedicine = true" class="btn btn-primary btn-sm">
-              ➕ Add Medicine
+              Add Medicine
             </button>
           </div>
 
@@ -116,12 +116,6 @@
             <div v-else class="medicine-grid">
               <div v-for="medicine in userMedicines" :key="medicine.id" class="medicine-card">
                 <div class="medicine-header">
-                  <div
-                    v-if="store.currentUser.id && medicine.id"
-                    @click="activateCreateOrder(store.currentUser.id, medicine.id)"
-                  >
-                    create order
-                  </div>
                   <h4 @click="$router.push({ name: 'CheckOut', params: { id: medicine.id } })">
                     {{ medicine.medicineName }}
                   </h4>
@@ -135,6 +129,13 @@
                       title="Delete"
                     >
                       🗑️
+                    </button>
+                    <button
+                      class="btn rounded-full bg-blue text-white font-lg"
+                      v-if="store.currentUser.id && medicine.id"
+                      @click="activateCreateOrder(store.currentUser.id, medicine.id)"
+                    >
+                      +
                     </button>
                   </div>
                 </div>

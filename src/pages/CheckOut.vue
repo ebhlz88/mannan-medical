@@ -13,7 +13,23 @@
       <div>
         <div class="flex justify-between items-center">
           <div class="text-h6">Medicine Order</div>
-          <q-icon @click="shareOneOrders(user)" size="md" color="blue" name="share"></q-icon>
+          <div class="flex space-x-6 items-center">
+            <q-icon
+              v-if="user.id && user.fullName"
+              @click="shareOneOrders(user.id, user.fullName, user)"
+              size="md"
+              color="blue"
+              name="description"
+            ></q-icon>
+            <q-icon
+              v-if="user.id && user.fullName"
+              @click="shareSingleOrder(user)"
+              size="md"
+              color="blue"
+              class="q-ml-lg"
+              name="share"
+            ></q-icon>
+          </div>
         </div>
         <q-separator class="q-my-sm" />
         <div class="q-mb-md">
@@ -99,7 +115,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useUserMedicineStore } from 'src/stores/user-medicine';
-import { shareSingleOrder } from 'src/services/shareOrder';
+import { generatePDFFromHTML, shareSingleOrder } from 'src/services/shareOrder';
 import type { UserWithOrders } from 'src/services/database';
 const store = useUserMedicineStore();
 const { loadUsersWithOrders, updateOrderQuantity, deleteOrder } = store;
@@ -133,8 +149,9 @@ async function submitEdit() {
   }
 }
 
-async function shareOneOrders(userOrder: UserWithOrders) {
-  await shareSingleOrder(userOrder);
+async function shareOneOrders(userId: number, userName: string, userOrder: UserWithOrders) {
+  const element = document.getElementById(`order-${userId}`);
+  if (element) await generatePDFFromHTML(element, `order-${userName}.pdf`, userOrder);
   await loadOrders();
 }
 </script>

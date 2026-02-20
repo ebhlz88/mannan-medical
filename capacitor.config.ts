@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.mannan.app',
-  appName: 'mannan-med',
+  appName: 'Jhalawan Hospital',
   webDir: 'www',
   plugins: {
     Media: {

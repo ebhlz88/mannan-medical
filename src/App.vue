@@ -53,9 +53,10 @@ import { onMounted } from 'vue';
 import { useUserMedicineStore } from 'src/stores/user-medicine';
 
 const store = useUserMedicineStore();
-
+const { deleteOrdersOlderThan } = store;
 onMounted(async () => {
   await store.initialize();
+  await deleteOrdersOlderThan(30);
 });
 </script>
 

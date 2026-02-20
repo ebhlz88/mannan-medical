@@ -88,7 +88,10 @@
             </div>
           </div>
         </div>
-
+        <!-- Add/Edit Medicine Modal -->
+        <div v-if="showAddMedicine" class="modal-overlay">
+          <AddMedicine @closeAddMedicine="closeAddMedicine" />
+        </div>
         <!-- Medicines Section -->
         <div class="detail-card">
           <div class="detail-card-header">
@@ -168,59 +171,6 @@
       </div>
     </div>
 
-    <!-- Add/Edit Medicine Modal -->
-    <div v-if="showAddMedicine || showEditMedicine" class="modal-overlay">
-      <div class="modal">
-        <div class="modal-header">
-          <h3>{{ editingMedicine ? 'Edit Medicine' : 'Add Medicine' }}</h3>
-          <button @click="closeMedicineModal" class="btn-close">×</button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="submitMedicineForm">
-            <div class="form-group">
-              <label class="form-label">Medicine Name *</label>
-              <input
-                v-model="medicineForm.medicineName"
-                type="text"
-                class="form-input"
-                required
-                placeholder="e.g., Paracetamol"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Dosage *</label>
-              <input
-                v-model="medicineForm.dosage"
-                type="text"
-                class="form-input"
-                required
-                placeholder="e.g., 500mg"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Company</label>
-              <input
-                v-model="medicineForm.company"
-                type="text"
-                class="form-input"
-                placeholder="e.g., Pharma Co."
-              />
-            </div>
-
-            <div class="modal-actions">
-              <button type="button" @click="closeMedicineModal" class="btn btn-secondary">
-                Cancel
-              </button>
-              <button type="submit" class="btn btn-primary" :disabled="store.isLoading">
-                {{ store.isLoading ? 'Saving...' : 'Save Medicine' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
     <q-dialog v-model="showcreateOrder">
       <create-order :activeMed="activeMed" @cancel="cancelCreateOrder" />
     </q-dialog>
@@ -233,7 +183,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserMedicineStore } from 'src/stores/user-medicine';
 import CreateOrder from 'src/components/CreateOrder.vue';
 import type { Medicine } from 'src/services/database';
-import { truncateString } from 'src/utils/utils';
+import { truncateString, formatDate, formatFullDate } from 'src/utils/utils';
+import AddMedicine from 'src/components/AddMedicine.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -259,12 +210,6 @@ const showAddMedicine = ref(false);
 const showEditMedicine = ref(false);
 const editingMedicine = ref<Medicine | null>(null);
 
-const medicineForm = ref({
-  medicineName: '',
-  dosage: '',
-  company: '',
-});
-
 const userId = computed(() => parseInt(route.params.id as string));
 const userMedicines = computed(() => {
   return store.getMedicinesByUserId(userId.value);
@@ -279,14 +224,6 @@ const getInitials = (name: string) => {
     .slice(0, 2);
 };
 
-const formatDate = (date: Date) => {
-  return new Date(date).toLocaleDateString();
-};
-
-const formatFullDate = (date: Date) => {
-  return new Date(date).toLocaleString();
-};
-
 const loadUserData = async () => {
   try {
     error.value = null;
@@ -297,6 +234,10 @@ const loadUserData = async () => {
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load user';
   }
+};
+
+const closeAddMedicine = () => {
+  showAddMedicine.value = false;
 };
 
 const editUser = () => {
@@ -322,11 +263,7 @@ const deleteUser = async () => {
 
 const editMedicine = (medicine: Medicine) => {
   editingMedicine.value = medicine;
-  medicineForm.value = {
-    medicineName: medicine.medicineName,
-    dosage: medicine.dosage,
-    company: medicine.company || '',
-  };
+
   showEditMedicine.value = true;
 };
 
@@ -337,41 +274,6 @@ const deleteMedicine = async (medicineId: number, medicineName: string) => {
     } catch (err) {
       console.error('Failed to delete medicine:', err);
     }
-  }
-};
-
-const closeMedicineModal = () => {
-  showAddMedicine.value = false;
-  showEditMedicine.value = false;
-  editingMedicine.value = null;
-  medicineForm.value = {
-    medicineName: '',
-    dosage: '',
-    company: '',
-  };
-};
-
-const submitMedicineForm = async () => {
-  if (!store.currentUser?.id) return;
-
-  try {
-    if (editingMedicine.value) {
-      await store.updateMedicine(editingMedicine.value.id!, {
-        medicineName: medicineForm.value.medicineName,
-        dosage: medicineForm.value.dosage,
-        company: medicineForm.value.company || undefined,
-      });
-    } else {
-      await store.createMedicine(
-        store.currentUser.id,
-        medicineForm.value.medicineName,
-        medicineForm.value.dosage,
-        medicineForm.value.company,
-      );
-    }
-    closeMedicineModal();
-  } catch (err) {
-    console.error('Failed to save medicine:', err);
   }
 };
 

@@ -72,7 +72,7 @@
               <td>{{ user.company || 'N/A' }}</td>
               <td>
                 <div class="truncate-text" :title="user.address || 'N/A'">
-                  {{ truncateText(user.address || 'N/A', 30) }}
+                  {{ truncateString(user.address || 'N/A', 30) }}
                 </div>
               </td>
               <td>
@@ -122,44 +122,7 @@
 
     <!-- Edit User Modal -->
     <div v-if="showEditModal" class="modal-overlay">
-      <div class="modal">
-        <div class="modal-header">
-          <h3>Edit User</h3>
-          <button @click="closeEditModal" class="btn-close">×</button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="submitEditForm">
-            <div class="form-group">
-              <label class="form-label">Full Name *</label>
-              <input v-model="editForm.fullName" type="text" class="form-input" required />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Phone Number *</label>
-              <input v-model="editForm.phoneNumber" type="tel" class="form-input" required />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Company</label>
-              <input v-model="editForm.company" type="text" class="form-input" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Address</label>
-              <textarea v-model="editForm.address" class="form-input" rows="3"></textarea>
-            </div>
-
-            <div class="modal-actions">
-              <button type="button" @click="closeEditModal" class="btn btn-secondary">
-                Cancel
-              </button>
-              <button type="submit" class="btn btn-primary" :disabled="store.isLoading">
-                {{ store.isLoading ? 'Saving...' : 'Save Changes' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+      <EditUser :editUserForm="editForm" @closeEditMedicine="closeEditMedicine" />
     </div>
   </div>
 </template>
@@ -167,6 +130,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useUserMedicineStore } from 'src/stores/user-medicine';
+import EditUser from 'src/components/EditUser.vue';
+import { formatDate, truncateString } from 'src/utils/utils';
 // import { useRouter } from 'vue-router';
 
 const store = useUserMedicineStore();
@@ -204,15 +169,6 @@ const getInitials = (name: string) => {
     .slice(0, 2);
 };
 
-const truncateText = (text: string, maxLength: number) => {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
-};
-
-const formatDate = (date: Date) => {
-  return new Date(date).toLocaleDateString();
-};
-
 const handleSearch = () => {
   // Debounce could be added here for performance
 };
@@ -235,7 +191,7 @@ const editUser = (id: number) => {
   }
 };
 
-const closeEditModal = () => {
+const closeEditMedicine = () => {
   showEditModal.value = false;
   editForm.value = {
     id: 0,
@@ -244,20 +200,6 @@ const closeEditModal = () => {
     company: '',
     address: '',
   };
-};
-
-const submitEditForm = async () => {
-  try {
-    await store.updateUser(editForm.value.id, {
-      fullName: editForm.value.fullName,
-      phoneNumber: editForm.value.phoneNumber,
-      company: editForm.value.company || undefined,
-      address: editForm.value.address || undefined,
-    });
-    closeEditModal();
-  } catch (error) {
-    console.error('Failed to update user:', error);
-  }
 };
 
 const confirmDeleteUser = async (id: number, name: string) => {

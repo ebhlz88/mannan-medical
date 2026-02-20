@@ -2,7 +2,7 @@
   <q-layout view="lHh Lpr lFf">
     <q-header elevated>
       <q-toolbar class="bg-purple toolbar">
-        <q-toolbar-title class="toolbar-title"> Mannan Medical </q-toolbar-title>
+        <q-toolbar-title class="toolbar-title"> Jhalawan Hospital </q-toolbar-title>
 
         <div></div>
       </q-toolbar>

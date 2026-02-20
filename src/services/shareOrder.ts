@@ -25,10 +25,12 @@ export const generatePDFFromHTML = async (
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
     } as const;
 
     // Generate PDF as blob
     const pdfBlob = await html2pdf().set(options).from(element).outputPdf('blob');
+    await html2pdf().set(options).from(element).save();
     return await savePDFToDevice(pdfBlob, filename, userOrder);
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -101,7 +103,7 @@ const saveBase64PDF = async (base64String: string, filename: string, userOrder: 
 
     // Get the file URI
     const fileUri = await Filesystem.getUri({
-      path: `${filename}`,
+      path: filename,
       directory: directory,
     });
     await Share.share({
@@ -110,6 +112,10 @@ const saveBase64PDF = async (base64String: string, filename: string, userOrder: 
     for (const order of userOrder.orders) {
       if (order.id) await updateOrderExported(order.id, 1);
     }
+    await Filesystem.deleteFile({
+      path: filename,
+      directory: directory,
+    });
 
     return {
       uri: fileUri.uri,
@@ -124,29 +130,12 @@ const saveBase64PDF = async (base64String: string, filename: string, userOrder: 
 export const shareSingleOrder = async (userOrder: UserWithOrders) => {
   const ordersText = userOrder.orders
     .map((order, index) => {
-      return `
-Order #${index + 1}
-Medicine: ${order.medicine.medicineName}
-Dosage: ${order.medicine.dosage}
-Company: ${order.medicine.company}
-Quantity: ${order.quantity}
-Date: ${new Date(order.createdAt).toLocaleString()}
-`;
+      return `${index + 1} ${order.medicine.medicineName} ${order.medicine.dosage} - ${order.quantity}`;
     })
-    .join('\n------------------\n');
+    .join('\n');
 
-  const message = `
-Customer Details
-------------------
-Name: ${userOrder.fullName}
-Phone: ${userOrder.phoneNumber}
-Company: ${userOrder.company}
-Address: ${userOrder.address}
-
-Orders
-==================
-${ordersText}
-`;
+  const message = ordersText;
+  console.log(message);
 
   try {
     // Check if Share is available on the platform
@@ -160,8 +149,6 @@ ${ordersText}
         return;
       }
     }
-    console.log(message);
-    console.log(userOrder.fullName);
     const shareResult = await Share.share({
       title: 'Customer Order Details',
       text: message,
@@ -188,5 +175,38 @@ ${ordersText}
       type: 'negative',
     });
     // }
+  }
+};
+
+export const exportData = async (fileName: string) => {
+  const data = await store.exportData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: 'application/json',
+  });
+  try {
+    // Check if Share is available on the platform
+    if (Capacitor.isNativePlatform()) {
+      const { value } = await Share.canShare();
+      if (!value) {
+        Notify.create({
+          message: 'Sharing is not available on this device',
+          type: 'warning',
+        });
+        return;
+      }
+    }
+    const directory = Capacitor.getPlatform() === 'android' ? Directory.Documents : Directory.Data;
+    const result = await Filesystem.writeFile({
+      path: `${fileName}`,
+      data: blob,
+      directory: directory,
+      recursive: true,
+    });
+
+    await Share.share({
+      url: result.uri,
+    });
+  } catch (error) {
+    console.log(error);
   }
 };

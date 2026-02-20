@@ -53,13 +53,17 @@
           <p>Create a new user profile</p>
         </router-link>
 
-        <button @click="exportData" class="quick-action" :disabled="store.isLoading">
+        <button @click="initExportData" class="quick-action" :disabled="store.isLoading">
           <div class="quick-action-icon">💾</div>
           <h6>Export Data</h6>
           <p>Backup all your data</p>
         </button>
 
-        <button @click="store.clearUsers" class="quick-action" :disabled="store.isLoading">
+        <button
+          @click="showClearData = !showClearData"
+          class="quick-action"
+          :disabled="store.isLoading"
+        >
           <div class="quick-action-icon">🗑️</div>
           <h6>Clear All Data</h6>
           <p>Reset the database</p>
@@ -115,32 +119,35 @@
         </div>
       </div>
     </div>
+    <q-dialog v-model="showClearData">
+      <q-card>
+        <q-card-section class="row items-center q-pb-none text-h6"> Please Confirm </q-card-section>
+
+        <q-card-section> Please Confirm, do your want to clear all data </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Close" color="primary" no-caps v-close-popup />
+          <q-btn @click="store.clearUsers" flat label="Clear All Data" no-caps color="primary" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useUserMedicineStore } from 'src/stores/user-medicine';
+import { exportData } from 'src/services/shareOrder';
 
+const showClearData = ref(false);
 const store = useUserMedicineStore();
 
 const recentUsers = computed(() => {
   return store.users.slice(0, 5);
 });
 
-const exportData = async () => {
-  const data = await store.exportData();
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: 'application/json',
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `user-medicine-data-${new Date().toISOString().split('T')[0]}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+const initExportData = async () => {
+  await exportData('exported-data.json');
 };
 
 onMounted(async () => {
